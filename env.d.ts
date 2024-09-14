@@ -2,4 +2,6 @@
 // by running `wrangler types --env-interface CloudflareEnv env.d.ts`
 
 interface CloudflareEnv {
+  KV: KVNamespace
+  R2: R2Bucket
 }
