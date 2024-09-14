@@ -3,14 +3,30 @@
 import { Link } from 'lucide-react'
 import toast, { Toaster } from 'react-hot-toast'
 
-export function CopyButton({ text }: { text: string }) {
+export function Button({
+  children,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button
+      className="flex h-fit items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-slate-50 transition-colors hover:bg-primary-hover"
+      {...props}
+    >
+      {children}
+    </button>
+  )
+}
+
+export function ShareButton({ fileId }: { fileId: string }) {
   return (
     <>
-      <button
-        className="bg-primary hover:bg-primary-hover flex h-fit items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium text-slate-50 transition-colors"
+      <Button
         onClick={async () => {
+          // Get the domain
+          const domain = window.location.origin
+
           try {
-            await navigator.clipboard.writeText(text)
+            await navigator.clipboard.writeText(`${domain}/share/${fileId}`)
             toast.success('Copied to clipboard')
           } catch (error) {
             toast.error('Failed to copy to clipboard')
@@ -19,7 +35,7 @@ export function CopyButton({ text }: { text: string }) {
       >
         <Link size={16} strokeWidth="2.5" />
         <span>Share</span>
-      </button>
+      </Button>
 
       <Toaster />
     </>

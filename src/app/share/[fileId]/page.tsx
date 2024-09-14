@@ -2,7 +2,7 @@ import { getRequestContext } from '@cloudflare/next-on-pages'
 import { notFound } from 'next/navigation'
 import { z } from 'zod'
 
-import { CopyButton } from '@/components/Button'
+import { ShareButton } from '@/components/Button'
 import { getRelativeTimeString } from '@/utils'
 
 export const runtime = 'edge'
@@ -56,17 +56,19 @@ export default async function Share({ params }: { params: Params }) {
     <main className="mx-auto flex min-h-svh max-w-7xl flex-col justify-center p-4 sm:p-10">
       <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
         <div className="flex flex-col gap-0.5">
-          <h1 className="text-2xl font-bold text-slate-900">Untitled</h1>
+          <h1 className="text-2xl font-bold">
+            {file.customMetadata?.title || 'Untitled'}
+          </h1>
           <span className="block text-sm text-slate-500">
             Uploaded{' '}
             <time dateTime={file.uploaded.toString()}>{relativeDate}</time>
           </span>
         </div>
 
-        <CopyButton text={`${baseCdnUrl}/share/${fileId}`} />
+        <ShareButton fileId={fileId} />
       </div>
 
-      <div className="mt-2 overflow-hidden rounded-lg bg-slate-200 shadow-md">
+      <div className="mt-3 overflow-hidden rounded-lg bg-slate-200 shadow-md">
         {(() => {
           if (contentType.startsWith('image/')) {
             return <img src={`${baseCdnUrl}/cdn/${file.key}`} />
