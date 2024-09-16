@@ -8,9 +8,15 @@
   "license": "MIT",
   "commands": [
     {
-      "name": "share-file",
+      "name": "upload",
       "title": "Share File",
       "description": "Easily share files on the web.",
+      "mode": "view"
+    },
+    {
+      "name": "list",
+      "title": "List Files",
+      "description": "List all files on the web.",
       "mode": "view"
     }
   ],

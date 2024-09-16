@@ -1,18 +1,10 @@
-import {
-  Action,
-  ActionPanel,
-  Clipboard,
-  Form,
-  getPreferenceValues,
-  openExtensionPreferences,
-  showToast,
-  Toast,
-} from "@raycast/api";
+import { Action, ActionPanel, Clipboard, Form, openExtensionPreferences, showToast, Toast } from "@raycast/api";
 import axios from "axios";
 import fs from "fs";
 
 import { useSelectedItem } from "./useSelectedItem";
 import { useState } from "react";
+import { baseUrl, fetchOptions } from "./utils";
 
 type Values = {
   title: string;
@@ -22,7 +14,6 @@ type Values = {
 export default function Command() {
   const { selectedItem, setSelectedItem } = useSelectedItem();
   const [isLoading, setIsLoading] = useState(false);
-  const baseUrl = new URL(getPreferenceValues().webUrl).origin;
 
   async function handleSubmit(values: Values) {
     setIsLoading(true);
@@ -38,11 +29,7 @@ export default function Command() {
           title: values.title,
           file: compressedFile,
         },
-        {
-          headers: {
-            "x-admin-secret": getPreferenceValues().apiSecret,
-          },
-        },
+        fetchOptions,
       )
       .catch((err) => {
         return {
