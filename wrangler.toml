@@ -9,10 +9,6 @@ pages_build_output_dir = ".vercel/output/static"
 binding = "R2"
 bucket_name = "gregskril"
 
-# Bind a KV Namespace. Use KV as persistent storage for small key-value pairs.
-# Docs: https://developers.cloudflare.com/pages/functions/bindings/#kv-namespaces
-# KV Example:
-# [[kv_namespaces]]
-# binding = "MY_KV_NAMESPACE"
-# id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-
+# The necessary secrets are:
+# - ADMIN_SECRET
+# Run `echo <VALUE> | npx wrangler secret put <NAME>` for each of these

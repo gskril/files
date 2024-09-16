@@ -14,9 +14,7 @@ const Schema = z.object({
 type Params = z.infer<typeof Schema>
 
 const baseCdnUrl =
-  process.env.NODE_ENV === 'development'
-    ? 'https://file-uploader-cre.pages.dev'
-    : ''
+  process.env.NODE_ENV === 'development' ? 'https://files.gregskril.com' : ''
 
 export default async function Share({ params }: { params: Params }) {
   const safeParse = Schema.safeParse(params)
