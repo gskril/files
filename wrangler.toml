@@ -1,4 +1,4 @@
-name = "file-uploader"
+name = "files"
 compatibility_date = "2024-09-09"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = ".vercel/output/static"
@@ -7,7 +7,7 @@ pages_build_output_dir = ".vercel/output/static"
 # Docs: https://developers.cloudflare.com/pages/functions/bindings/#r2-buckets
 [[r2_buckets]]
 binding = "R2"
-bucket_name = "gregskril"
+bucket_name = "files"
 
 # The necessary secrets are:
 # - ADMIN_SECRET
