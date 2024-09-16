@@ -20,7 +20,10 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
   const safeParse = Schema.safeParse({ ...body, ...params })
 
   if (!safeParse.success) {
-    return NextResponse.json(safeParse.error, { status: 400 })
+    return NextResponse.json(
+      { success: false, error: 'Invalid request' },
+      { status: 400 }
+    )
   }
 
   const { title, file } = safeParse.data
