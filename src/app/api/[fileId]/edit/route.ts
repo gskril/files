@@ -28,7 +28,7 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
     return NextResponse.json({ error: 'File not found' }, { status: 404 })
   }
 
-  await r2.put(fileId, null, {
+  await r2.put(fileId, await file.blob(), {
     customMetadata: { title },
   })
 
