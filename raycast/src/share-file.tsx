@@ -1,7 +1,18 @@
-import { getSelectedFinderItems, Clipboard, Form, ActionPanel, Action, showToast, Toast } from "@raycast/api";
-import { useEffect, useState } from "react";
-import fs from "fs";
+import {
+  Action,
+  ActionPanel,
+  Clipboard,
+  Form,
+  getPreferenceValues,
+  openExtensionPreferences,
+  showToast,
+  Toast,
+} from "@raycast/api";
 import axios from "axios";
+import fs from "fs";
+
+import { useSelectedItem } from "./useSelectedItem";
+import { useState } from "react";
 
 type Values = {
   title: string;
@@ -9,9 +20,11 @@ type Values = {
 };
 
 export default function Command() {
-  const [selectedItem, setSelectedItem] = useState<string>();
+  const { selectedItem, setSelectedItem } = useSelectedItem();
+  const [isLoading, setIsLoading] = useState(false);
 
   async function handleSubmit(values: Values) {
+    setIsLoading(true);
     const file = fs.readFileSync(values.filePath[0]);
 
     // TODO: Compress file with ffmpeg
@@ -26,8 +39,7 @@ export default function Command() {
         },
         {
           headers: {
-            // TODO: Read this from Raycast Storage https://developers.raycast.com/api-reference/storage
-            "x-admin-secret": "xxxxxxxx",
+            "x-admin-secret": getPreferenceValues().apiSecret,
           },
         },
       )
@@ -42,30 +54,21 @@ export default function Command() {
     if (!data.success) {
       showToast({ title: "Error", message: data.error, style: Toast.Style.Failure });
     } else {
-      await Clipboard.copy(`https://files.gregskril.com/share/${data?.key}`);
+      const url = `https://files.gregskril.com/share/${data?.key}`;
+      await Clipboard.copy(url);
       showToast({ title: "Success", message: "File uploaded" });
     }
+
+    setIsLoading(false);
   }
-
-  async function init() {
-    const firstSelectedItem = await getSelectedFinderItems()
-      .then((items) => items[0].path)
-      .catch(() => {
-        return undefined;
-      });
-
-    setSelectedItem(firstSelectedItem);
-  }
-
-  useEffect(() => {
-    init();
-  }, []);
 
   return (
     <Form
+      isLoading={isLoading}
       actions={
         <ActionPanel>
-          <Action.SubmitForm onSubmit={handleSubmit} />
+          <Action.SubmitForm title="Upload" onSubmit={handleSubmit} />
+          <Action title="Open Preferences" onAction={openExtensionPreferences} />
         </ActionPanel>
       }
     >
@@ -76,7 +79,6 @@ export default function Command() {
         value={selectedItem ? [selectedItem] : []}
         onChange={async (newValue) => {
           const firstItem = newValue[0];
-          console.log(firstItem);
           setSelectedItem(firstItem);
         }}
       />

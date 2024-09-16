@@ -10,8 +10,17 @@
     {
       "name": "share-file",
       "title": "Share File",
-      "description": "",
+      "description": "Easily share files on the web.",
       "mode": "view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "apiSecret",
+      "title": "API Secret",
+      "description": "The secret to use for the API",
+      "type": "password",
+      "required": true
     }
   ],
   "dependencies": {

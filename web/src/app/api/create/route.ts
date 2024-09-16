@@ -31,14 +31,6 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
   const buffer = Buffer.from(file)
   const fileHash = await ipfsHash.of(buffer)
   const r2 = getRequestContext().env.R2
-  const fileExists = await r2.get(fileHash)
-
-  if (fileExists) {
-    return NextResponse.json(
-      { success: false, error: 'File already exists' },
-      { status: 400 }
-    )
-  }
 
   try {
     await r2.put(fileHash, buffer, {
