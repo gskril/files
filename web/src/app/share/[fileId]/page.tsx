@@ -13,9 +13,6 @@ const Schema = z.object({
 
 type Params = z.infer<typeof Schema>
 
-const baseCdnUrl =
-  process.env.NODE_ENV === 'development' ? 'https://files.gregskril.com' : ''
-
 export default async function Share({ params }: { params: Params }) {
   const safeParse = Schema.safeParse(params)
 
@@ -25,24 +22,8 @@ export default async function Share({ params }: { params: Params }) {
 
   const { fileId } = safeParse.data
 
-  let file: R2ObjectBody | null
-  let contentType: string | undefined
-
-  if (process.env.NODE_ENV === 'development') {
-    file = {
-      key: 'Qmdd5Npgj93rRZKbffUToffWoJ8f69czYkkES1BxzTHBes',
-      // key: 'QmWpVyv3uY7mw8jizyCXf3wAMFvjgjyzmr1sQri3WRjuTJ',
-      uploaded: new Date('2024-09-14T00:00:00Z'),
-      httpMetadata: {
-        contentType: 'video/mp4',
-        // contentType: 'image/png',
-      },
-    } as unknown as R2ObjectBody
-  } else {
-    file = await getRequestContext().env.R2.get(fileId)
-  }
-
-  contentType = file?.httpMetadata?.contentType
+  const file = await getRequestContext().env.R2.get(fileId)
+  const contentType = file?.httpMetadata?.contentType
 
   if (!file || !contentType) {
     return notFound()
@@ -58,7 +39,7 @@ export default async function Share({ params }: { params: Params }) {
             {file.customMetadata?.title || 'Untitled'}
           </h1>
           <span className="block text-sm text-slate-500">
-            Uploaded{' '}
+            Updated{' '}
             <time dateTime={file.uploaded.toString()}>{relativeDate}</time>
           </span>
         </div>
@@ -69,13 +50,13 @@ export default async function Share({ params }: { params: Params }) {
       <div className="mt-3 overflow-hidden rounded-lg bg-slate-200 shadow-md">
         {(() => {
           if (contentType.startsWith('image/')) {
-            return <img src={`${baseCdnUrl}/cdn/${file.key}`} />
+            return <img src={`/cdn/${file.key}`} />
           }
 
           if (contentType.startsWith('video/')) {
             return (
               <video
-                src={`${baseCdnUrl}/cdn/${file.key}`}
+                src={`/cdn/${file.key}`}
                 className="aspect-video w-full"
                 controls
               />

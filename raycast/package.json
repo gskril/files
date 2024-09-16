@@ -21,6 +21,14 @@
       "description": "The secret to use for the API",
       "type": "password",
       "required": true
+    },
+    {
+      "name": "webUrl",
+      "title": "Web URL",
+      "description": "The URL to use for the web app",
+      "type": "textfield",
+      "required": true,
+      "default": "https://files.gregskril.com"
     }
   ],
   "dependencies": {

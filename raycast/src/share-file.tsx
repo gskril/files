@@ -22,6 +22,7 @@ type Values = {
 export default function Command() {
   const { selectedItem, setSelectedItem } = useSelectedItem();
   const [isLoading, setIsLoading] = useState(false);
+  const baseUrl = new URL(getPreferenceValues().webUrl).origin;
 
   async function handleSubmit(values: Values) {
     setIsLoading(true);
@@ -32,7 +33,7 @@ export default function Command() {
 
     const { data } = await axios
       .post<{ success: boolean; key?: string; error?: string }>(
-        "https://files.gregskril.com/api/create",
+        `${baseUrl}/api/create`,
         {
           title: values.title,
           file: compressedFile,
@@ -54,9 +55,9 @@ export default function Command() {
     if (!data.success) {
       showToast({ title: "Error", message: data.error, style: Toast.Style.Failure });
     } else {
-      const url = `https://files.gregskril.com/share/${data?.key}`;
+      const url = `${baseUrl}/share/${data?.key}`;
       await Clipboard.copy(url);
-      showToast({ title: "Success", message: "File uploaded" });
+      showToast({ title: "Success", message: "URL copied to clipboard" });
     }
 
     setIsLoading(false);
