@@ -1,9 +1,10 @@
 import { Action, ActionPanel, Clipboard, Form, openExtensionPreferences, showToast, Toast } from "@raycast/api";
+import { fileFromPath } from "formdata-node/file-from-path";
+import { FormData } from "formdata-node";
+import { useState } from "react";
 import axios from "axios";
-import fs from "fs";
 
 import { useSelectedItem } from "./useSelectedItem";
-import { useState } from "react";
 import { baseUrl, fetchOptions } from "./utils";
 
 type Values = {
@@ -17,20 +18,21 @@ export default function Command() {
 
   async function handleSubmit(values: Values) {
     setIsLoading(true);
-    const file = fs.readFileSync(values.filePath[0]);
+    const file = await fileFromPath(values.filePath[0]);
 
     // TODO: Compress file with ffmpeg
     const compressedFile = file;
 
+    const formData = new FormData();
+    formData.append("file", compressedFile);
+    formData.append("title", values.title);
+
     const { data } = await axios
-      .post<{ success: boolean; key?: string; error?: string }>(
-        `${baseUrl}/api/create`,
-        {
-          title: values.title,
-          file: compressedFile,
-        },
-        fetchOptions,
-      )
+      .postForm<{
+        success: boolean;
+        key?: string;
+        error?: string;
+      }>(`${baseUrl}/api/create`, formData, fetchOptions)
       .catch((err) => {
         return {
           data: {

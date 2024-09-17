@@ -1,23 +1,18 @@
 import { getRequestContext } from '@cloudflare/next-on-pages'
 import ipfsHash from 'ipfs-only-hash'
 import { NextRequest, NextResponse } from 'next/server'
-import { z } from 'zod'
+import { zfd } from 'zod-form-data'
 
 export const runtime = 'edge'
 
-const Schema = z.object({
-  file: z.any(),
-  title: z.string(),
+const Schema = zfd.formData({
+  file: zfd.file(),
+  title: zfd.text(),
 })
 
-type Params = z.infer<typeof Schema>
-
-// I think this might only work for files <315mb, which should be fine for compressed video files
-// If you need to support larger files, upload to R2 directly via any S3-compatible tool
-// Example: https://gist.github.com/gskril/f81fc6ae44aad64213f2e3acc99a6e31
-export async function POST(req: NextRequest, { params }: { params: Params }) {
-  const body = (await req.json()) || {}
-  const safeParse = Schema.safeParse({ ...body, ...params })
+export async function POST(req: NextRequest) {
+  const formData = await req.formData()
+  const safeParse = Schema.safeParse(formData)
 
   if (!safeParse.success) {
     return NextResponse.json(
@@ -28,8 +23,8 @@ export async function POST(req: NextRequest, { params }: { params: Params }) {
 
   const { title, file } = safeParse.data
 
-  const buffer = Buffer.from(file)
-  const fileHash = await ipfsHash.of(buffer)
+  const buffer = await file.arrayBuffer()
+  const fileHash = await ipfsHash.of(new Uint8Array(buffer))
   const r2 = getRequestContext().env.R2
 
   try {
