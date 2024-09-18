@@ -1,30 +1,59 @@
-import { Action, ActionPanel, Clipboard, Form, openExtensionPreferences, showToast, Toast } from "@raycast/api";
+import { Action, ActionPanel, Clipboard, Detail, Form, openExtensionPreferences, showToast, Toast } from "@raycast/api";
 import { fileFromPath } from "formdata-node/file-from-path";
 import { FormData } from "formdata-node";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
+import fs from "fs";
+import mime from "mime-types";
 
-import { useSelectedItem } from "./useSelectedItem";
 import { baseUrl, fetchOptions } from "./utils";
+import { compressVideo } from "./ffmpeg";
+import { useSelectedItem } from "./useSelectedItem";
 
 type Values = {
-  title: string;
+  title?: string;
   filePath: string[];
+  shouldCompress: boolean;
 };
 
 export default function Command() {
   const { selectedItem, setSelectedItem } = useSelectedItem();
   const [isLoading, setIsLoading] = useState(false);
+  const [isVideo, setIsVideo] = useState(false);
+  const [shouldCompress, setShouldCompress] = useState(true);
+  const [ffmpegProgress, setFfmpegProgress] = useState<number>(0);
+
+  useEffect(() => {
+    if (selectedItem) {
+      const fileType = mime.lookup(selectedItem);
+
+      if (fileType && fileType?.startsWith("video/")) {
+        setIsVideo(true);
+      }
+    }
+  }, [selectedItem]);
 
   async function handleSubmit(values: Values) {
     setIsLoading(true);
-    const file = await fileFromPath(values.filePath[0]);
+    const originalFilePath = values.filePath[0];
 
-    // TODO: Compress file with ffmpeg
-    const compressedFile = file;
+    if (!mime.lookup(originalFilePath)) {
+      showToast({ title: "Error", message: "Unsupported file type", style: Toast.Style.Failure });
+      return;
+    }
+
+    let filePath = originalFilePath;
+
+    console.log("shouldCompress", shouldCompress);
+
+    if (isVideo && shouldCompress) {
+      filePath = await compressVideo(originalFilePath, setFfmpegProgress);
+    }
+
+    const file = await fileFromPath(filePath);
 
     const formData = new FormData();
-    formData.append("file", compressedFile);
+    formData.append("file", file);
     formData.append("title", values.title);
 
     const { data } = await axios
@@ -49,7 +78,15 @@ export default function Command() {
       showToast({ title: "Success", message: "URL copied to clipboard" });
     }
 
+    if (isVideo && shouldCompress) {
+      fs.unlinkSync(filePath);
+    }
+
     setIsLoading(false);
+  }
+
+  if (isLoading && isVideo && shouldCompress) {
+    return <Detail markdown={`Compressing video file: ${ffmpegProgress.toFixed(2)}%`} />;
   }
 
   return (
@@ -72,7 +109,17 @@ export default function Command() {
           setSelectedItem(firstItem);
         }}
       />
-      <Form.TextField id="title" title="Title" placeholder="Enter title" />
+
+      <Form.TextField id="title" title="Title" info='Default is "Untilted"' />
+
+      <Form.Checkbox
+        id="_"
+        label=""
+        title="Compress"
+        defaultValue={true}
+        onChange={(v) => setShouldCompress(v)}
+        info="Only relevant for videos"
+      />
     </Form>
   );
 }

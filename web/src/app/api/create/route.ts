@@ -1,13 +1,14 @@
 import { getRequestContext } from '@cloudflare/next-on-pages'
 import ipfsHash from 'ipfs-only-hash'
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { zfd } from 'zod-form-data'
 
 export const runtime = 'edge'
 
 const Schema = zfd.formData({
   file: zfd.file(),
-  title: zfd.text(),
+  title: zfd.text(z.string().default('')),
 })
 
 export async function POST(req: NextRequest) {
