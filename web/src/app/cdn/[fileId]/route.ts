@@ -30,6 +30,10 @@ export async function GET(_req: NextRequest, { params }: { params: Params }) {
     headers: {
       'Content-Type': file.httpMetadata?.contentType!,
       'Cache-Control': 'public, max-age=31536000',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Methods': 'GET',
+      'Access-Control-Max-Age': '86400',
     },
   })
 }
