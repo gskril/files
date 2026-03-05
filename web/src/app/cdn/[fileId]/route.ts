@@ -5,24 +5,6 @@ import { z } from 'zod'
 
 export const runtime = 'edge'
 
-export async function generateMetadata({ params }: { params: Params }) {
-  const safeParse = Schema.safeParse(params)
-
-  if (!safeParse.success) {
-    return notFound()
-  }
-
-  const { fileId } = safeParse.data
-  const r2 = getRequestContext().env.R2
-  const file = await r2.get(fileId)
-
-  if (!file) {
-    return notFound()
-  }
-
-  return { title: file.customMetadata?.title }
-}
-
 const Schema = z.object({
   fileId: z.string().length(46),
 })

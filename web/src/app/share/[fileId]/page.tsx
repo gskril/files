@@ -1,4 +1,5 @@
 import { getRequestContext } from '@cloudflare/next-on-pages'
+import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { z } from 'zod'
 
@@ -12,6 +13,27 @@ const Schema = z.object({
 })
 
 type Params = z.infer<typeof Schema>
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Params
+}): Promise<Metadata> {
+  const safeParse = Schema.safeParse(params)
+
+  if (!safeParse.success) {
+    return {}
+  }
+
+  const { fileId } = safeParse.data
+  const file = await getRequestContext().env.R2.get(fileId)
+
+  if (!file) {
+    return {}
+  }
+
+  return { title: file.customMetadata?.title }
+}
 
 export default async function Share({ params }: { params: Params }) {
   const safeParse = Schema.safeParse(params)
