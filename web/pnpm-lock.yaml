@@ -45,15 +45,9 @@ importers:
       '@astrojs/check':
         specifier: ^0.9.9
         version: 0.9.9(prettier@3.9.4)(typescript@6.0.3)
-      '@cloudflare/workers-types':
-        specifier: 4.20260630.1
-        version: 4.20260630.1
       '@trivago/prettier-plugin-sort-imports':
         specifier: ^6.0.2
         version: 6.0.2(prettier@3.9.4)
-      '@types/node':
-        specifier: 26.0.1
-        version: 26.0.1
       '@types/react':
         specifier: ^19.2.17
         version: 19.2.17
@@ -3326,7 +3320,8 @@ snapshots:
   '@cloudflare/workerd-windows-64@1.20260630.1':
     optional: true
 
-  '@cloudflare/workers-types@4.20260630.1': {}
+  '@cloudflare/workers-types@4.20260630.1':
+    optional: true
 
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
