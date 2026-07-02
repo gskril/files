@@ -16,7 +16,7 @@ pnpm install
 pnpm dev
 ```
 
-The dev server runs at `http://localhost:4321`. Note that R2 bindings are not available in `astro dev` — use `pnpm preview` to test with local R2 via Wrangler.
+The dev server runs at `http://localhost:4321` with simulated local bindings, including R2. Set `ADMIN_SECRET` in a `.dev.vars` file to authenticate API requests locally. For a production-faithful preview in the actual workerd runtime, use `pnpm preview` (serves at `http://localhost:8788`).
 
 ## Deployment
 
