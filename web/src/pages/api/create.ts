@@ -16,7 +16,7 @@ export const POST: APIRoute = async (context) => {
   if (!safeParse.success) {
     return new Response(
       JSON.stringify({ success: false, error: 'Invalid request' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } },
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
     )
   }
 
@@ -26,6 +26,8 @@ export const POST: APIRoute = async (context) => {
 
   try {
     await env.R2.put(fileHash, buffer, {
+      // The share page and /cdn route rely on contentType to render the file.
+      httpMetadata: { contentType: file.type },
       customMetadata: { title },
     })
 
@@ -35,7 +37,7 @@ export const POST: APIRoute = async (context) => {
   } catch (err) {
     return new Response(
       JSON.stringify({ success: false, error: 'Failed to create file' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } },
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
   }
 }
