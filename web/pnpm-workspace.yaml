@@ -1,3 +1,9 @@
+allowBuilds:
+  esbuild: true
+  protobufjs: true
+  sharp: true
+  workerd: true
+
 # Supply-chain safety: only install package versions that have been
 # published for at least 2 days (2880 minutes), including transitive deps.
 minimumReleaseAge: 2880

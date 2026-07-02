@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro'
+import { env } from 'cloudflare:workers'
 
-export const GET: APIRoute = async (context) => {
-  const { env } = context.locals.runtime
+export const GET: APIRoute = async () => {
   const list = await env.R2.list({ include: ['customMetadata'] })
 
   return new Response(

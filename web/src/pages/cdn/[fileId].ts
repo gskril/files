@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro'
+import { env } from 'cloudflare:workers'
 import { z } from 'zod'
 
 const Schema = z.object({
@@ -13,7 +14,6 @@ export const GET: APIRoute = async (context) => {
   }
 
   const { fileId } = safeParse.data
-  const { env } = context.locals.runtime
   const file = await env.R2.get(fileId)
 
   if (!file) {

@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro'
+import { env } from 'cloudflare:workers'
 import ipfsHash from 'ipfs-only-hash'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'
@@ -22,7 +23,6 @@ export const POST: APIRoute = async (context) => {
   const { title, file } = safeParse.data
   const buffer = await file.arrayBuffer()
   const fileHash = await ipfsHash.of(new Uint8Array(buffer))
-  const { env } = context.locals.runtime
 
   try {
     await env.R2.put(fileHash, buffer, {

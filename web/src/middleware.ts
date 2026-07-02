@@ -3,7 +3,7 @@ import { defineMiddleware } from 'astro:middleware'
 export const onRequest = defineMiddleware(async (context, next) => {
   if (context.url.pathname.startsWith('/api/')) {
     const secret = context.request.headers.get('x-admin-secret')
-    const { env } = context.locals.runtime
+    const { env } = await import('cloudflare:workers')
 
     if (secret !== env.ADMIN_SECRET) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {

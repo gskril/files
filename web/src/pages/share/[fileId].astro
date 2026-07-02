@@ -1,4 +1,5 @@
 ---
+import { env } from 'cloudflare:workers'
 import { z } from 'zod'
 
 import { ShareButton } from '../../components/Button'
@@ -16,7 +17,6 @@ if (!safeParse.success) {
 }
 
 const { fileId } = safeParse.data
-const { env } = Astro.locals.runtime
 const file = await env.R2.get(fileId)
 const contentType = file?.httpMetadata?.contentType
 
