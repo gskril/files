@@ -13,3 +13,11 @@ This is a Next.js app built to run on Cloudflare Pages. It provides an API to up
 4. Once deployed, navigate to the project settings and set the `ADMIN_SECRET` environment variable to a random string of your choosing. You may need to trigger a build to get the new environment variable to take effect. You'll need to use this secret in the Raycast extension to authenticate file uploads.
 
 That's it! The app will be deployed to a custom domain you can set up in the Cloudflare Pages project settings. Files will be viewable via `{yourdomain.com}/share/{file-hash}`.
+
+## API
+
+The app exposes three endpoints, described by an OpenAPI spec served at `{yourdomain.com}/openapi.json`:
+
+- `POST /api/create` — upload a file (multipart form: `file`, optional `title`). Returns the SHA-256 hex hash of the file contents as `key`. Requires the `x-admin-secret` header.
+- `GET /api/list` — list uploaded files with metadata. Requires the `x-admin-secret` header.
+- `GET /cdn/{fileId}` — publicly fetch a file by its content hash. No auth.

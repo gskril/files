@@ -3,10 +3,12 @@ import { notFound } from 'next/navigation'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { FileIdSchema } from '@/utils'
+
 export const runtime = 'edge'
 
 const Schema = z.object({
-  fileId: z.string().length(46),
+  fileId: FileIdSchema,
 })
 
 type Params = z.infer<typeof Schema>
@@ -28,7 +30,7 @@ export async function GET(_req: NextRequest, { params }: { params: Params }) {
 
   return new NextResponse(await file.arrayBuffer(), {
     headers: {
-      'Content-Type': file.httpMetadata?.contentType!,
+      'Content-Type': file.httpMetadata?.contentType ?? 'application/octet-stream',
       'Cache-Control': 'public, max-age=31536000',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Headers': 'Content-Type',

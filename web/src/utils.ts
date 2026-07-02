@@ -1,3 +1,17 @@
+import { z } from 'zod'
+
+// SHA-256 hex (current) or IPFS CIDv0 (legacy keys from before the migration)
+export const FileIdSchema = z
+  .string()
+  .regex(/^([0-9a-f]{64}|Qm[1-9A-HJ-NP-Za-km-z]{44})$/)
+
+export async function sha256Hex(buffer: ArrayBuffer): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', buffer)
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('')
+}
+
 // https://www.builder.io/blog/relative-time
 export function getRelativeTimeString(date: Date | number): string {
   // Allow dates or times to be passed

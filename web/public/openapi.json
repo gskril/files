@@ -1,0 +1,208 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Simple File Sharing API",
+    "description": "Upload files to Cloudflare R2 and serve them via a public CDN route. Files are addressed by the SHA-256 hash of their contents, hex-encoded. Upload and list endpoints require the `x-admin-secret` header; CDN reads are public.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "The deployment this spec is served from"
+    }
+  ],
+  "paths": {
+    "/api/create": {
+      "post": {
+        "operationId": "uploadFile",
+        "summary": "Upload a file",
+        "description": "Uploads a file to R2. The file is stored under the SHA-256 hex hash of its contents, which is returned as `key`. Uploading the same content twice is idempotent and yields the same key. The file is then publicly available at `/cdn/{key}`.",
+        "security": [{ "adminSecret": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The file to upload"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Optional human-readable title stored as metadata",
+                    "default": ""
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "File stored successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["success", "key"],
+                  "properties": {
+                    "success": { "type": "boolean", "enum": [true] },
+                    "key": {
+                      "type": "string",
+                      "description": "SHA-256 hash of the file contents, hex-encoded. Fetch the file at /cdn/{key}.",
+                      "example": "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (missing or malformed form data)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "500": {
+            "description": "Failed to store the file",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/list": {
+      "get": {
+        "operationId": "listFiles",
+        "summary": "List uploaded files",
+        "description": "Lists objects in the R2 bucket with their metadata.",
+        "security": [{ "adminSecret": [] }],
+        "responses": {
+          "200": {
+            "description": "List of uploaded files",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["truncated", "objects"],
+                  "properties": {
+                    "truncated": {
+                      "type": "boolean",
+                      "description": "True if more objects exist beyond this page"
+                    },
+                    "objects": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["key", "size", "uploaded"],
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "description": "SHA-256 hex hash of the file contents (or a legacy IPFS CIDv0 for files uploaded before the hash migration)"
+                          },
+                          "size": {
+                            "type": "integer",
+                            "description": "File size in bytes"
+                          },
+                          "uploaded": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Upload timestamp"
+                          },
+                          "customMetadata": {
+                            "type": "object",
+                            "additionalProperties": { "type": "string" },
+                            "description": "Custom metadata such as title"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/cdn/{fileId}": {
+      "get": {
+        "operationId": "getFile",
+        "summary": "Fetch a file from the CDN",
+        "description": "Publicly serves a stored file by its content hash with long-lived caching and permissive CORS. No authentication required.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "description": "SHA-256 hex hash returned as `key` by the upload endpoint (legacy IPFS CIDv0 keys are also accepted)",
+            "schema": {
+              "type": "string",
+              "pattern": "^([0-9a-f]{64}|Qm[1-9A-HJ-NP-Za-km-z]{44})$",
+              "example": "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The file contents, served with its original content type",
+            "content": {
+              "*/*": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          },
+          "404": {
+            "description": "File not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ApiError" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "adminSecret": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-admin-secret",
+        "description": "Admin secret set via the ADMIN_SECRET environment variable on the deployment"
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Missing or invalid x-admin-secret header",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ApiError" }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "enum": [false] },
+          "error": { "type": "string" }
+        }
+      }
+    }
+  }
+}

@@ -1,8 +1,9 @@
 import { getRequestContext } from '@cloudflare/next-on-pages'
-import ipfsHash from 'ipfs-only-hash'
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'
+
+import { sha256Hex } from '@/utils'
 
 export const runtime = 'edge'
 
@@ -25,11 +26,12 @@ export async function POST(req: NextRequest) {
   const { title, file } = safeParse.data
 
   const buffer = await file.arrayBuffer()
-  const fileHash = await ipfsHash.of(new Uint8Array(buffer))
+  const fileHash = await sha256Hex(buffer)
   const r2 = getRequestContext().env.R2
 
   try {
     await r2.put(fileHash, buffer, {
+      httpMetadata: { contentType: file.type || 'application/octet-stream' },
       customMetadata: { title },
     })
 

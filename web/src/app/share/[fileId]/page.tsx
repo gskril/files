@@ -4,12 +4,12 @@ import { notFound } from 'next/navigation'
 import { z } from 'zod'
 
 import { ShareButton } from '@/components/Button'
-import { getRelativeTimeString } from '@/utils'
+import { FileIdSchema, getRelativeTimeString } from '@/utils'
 
 export const runtime = 'edge'
 
 const Schema = z.object({
-  fileId: z.string().length(46),
+  fileId: FileIdSchema,
 })
 
 type Params = z.infer<typeof Schema>
