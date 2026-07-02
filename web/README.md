@@ -42,6 +42,7 @@ The dev server runs at `http://localhost:4321`. Note that R2 bindings are not av
 | `/share/[fileId]` | GET | View an uploaded file |
 | `/cdn/[fileId]` | GET | Serve raw file content from R2 |
 | `/api/create` | POST | Upload a file (requires `x-admin-secret` header) |
+| `/api/list` | GET | List uploaded files (requires `x-admin-secret` header) |
 
 ## Scripts
 
