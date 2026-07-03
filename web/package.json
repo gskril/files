@@ -8,6 +8,7 @@
     "build": "astro build",
     "check": "astro check",
     "preview": "astro build && wrangler dev",
+    "test": "node --test src/utils.test.mjs",
     "prettier": "prettier --write .",
     "postinstall": "wrangler types",
     "cf-typegen": "wrangler types"

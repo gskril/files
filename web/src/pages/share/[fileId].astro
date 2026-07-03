@@ -4,7 +4,11 @@ import { env } from 'cloudflare:workers'
 import { ShareButton } from '../../components/Button'
 import Layout from '../../layouts/Layout.astro'
 import { fileIdSchema } from '../../schemas/fileId'
-import { getRelativeTimeString, resolveR2ContentType } from '../../utils'
+import {
+  CONTENT_TYPE_SNIFF_BYTE_LENGTH,
+  getRelativeTimeString,
+  resolveContentType,
+} from '../../utils'
 
 const safeParse = fileIdSchema.safeParse(Astro.params)
 
@@ -13,16 +17,17 @@ if (!safeParse.success) {
 }
 
 const { fileId } = safeParse.data
-const file = await env.R2.get(fileId)
+const file = await env.R2.get(fileId, {
+  range: { offset: 0, length: CONTENT_TYPE_SNIFF_BYTE_LENGTH },
+})
 
 if (!file) {
   return Astro.rewrite('/404')
 }
 
-const contentType = await resolveR2ContentType(
-  env.R2,
-  fileId,
+const contentType = resolveContentType(
   file.httpMetadata?.contentType,
+  await file.arrayBuffer(),
 )
 
 const title = file.customMetadata?.title || 'Untitled'

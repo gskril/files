@@ -11,6 +11,9 @@ const EXTENSION_CONTENT_TYPES: Record<string, string> = {
   jpeg: 'image/jpeg',
   gif: 'image/gif',
   webp: 'image/webp',
+  avif: 'image/avif',
+  heic: 'image/heic',
+  heif: 'image/heif',
   svg: 'image/svg+xml',
   mp4: 'video/mp4',
   webm: 'video/webm',
@@ -22,20 +25,72 @@ function contentTypeFromFilename(filename: string): string | undefined {
   return ext ? EXTENSION_CONTENT_TYPES[ext] : undefined
 }
 
+export const CONTENT_TYPE_SNIFF_BYTE_LENGTH = 64
+
+const ISO_BASE_MEDIA_CONTENT_TYPES: Record<string, string> = {
+  isom: 'video/mp4',
+  iso2: 'video/mp4',
+  iso3: 'video/mp4',
+  iso4: 'video/mp4',
+  iso5: 'video/mp4',
+  iso6: 'video/mp4',
+  mp41: 'video/mp4',
+  mp42: 'video/mp4',
+  avc1: 'video/mp4',
+  'M4V ': 'video/mp4',
+  'qt  ': 'video/quicktime',
+  avif: 'image/avif',
+  avis: 'image/avif',
+  heic: 'image/heic',
+  heix: 'image/heic',
+  hevc: 'image/heic',
+  hevx: 'image/heic',
+}
+
+function asciiAt(bytes: Uint8Array, offset: number, length: number): string {
+  return String.fromCharCode(...bytes.subarray(offset, offset + length))
+}
+
+function hasEbmlDocType(bytes: Uint8Array, docType: string): boolean {
+  const encoded = Array.from(docType, (character) => character.charCodeAt(0))
+
+  for (let index = 4; index < bytes.length - encoded.length - 2; index += 1) {
+    if (
+      bytes[index] === 0x42 &&
+      bytes[index + 1] === 0x82 &&
+      bytes[index + 2] === (0x80 | encoded.length) &&
+      encoded.every((byte, offset) => bytes[index + 3 + offset] === byte)
+    ) {
+      return true
+    }
+  }
+
+  return false
+}
+
 function sniffContentType(buffer: ArrayBuffer): string | undefined {
-  const bytes = new Uint8Array(buffer.slice(0, 16))
+  const bytes = new Uint8Array(buffer.slice(0, CONTENT_TYPE_SNIFF_BYTE_LENGTH))
 
   if (
     bytes.length >= 8 &&
     bytes[0] === 0x89 &&
     bytes[1] === 0x50 &&
     bytes[2] === 0x4e &&
-    bytes[3] === 0x47
+    bytes[3] === 0x47 &&
+    bytes[4] === 0x0d &&
+    bytes[5] === 0x0a &&
+    bytes[6] === 0x1a &&
+    bytes[7] === 0x0a
   ) {
     return 'image/png'
   }
 
-  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+  if (
+    bytes.length >= 3 &&
+    bytes[0] === 0xff &&
+    bytes[1] === 0xd8 &&
+    bytes[2] === 0xff
+  ) {
     return 'image/jpeg'
   }
 
@@ -63,33 +118,40 @@ function sniffContentType(buffer: ArrayBuffer): string | undefined {
     return 'image/webp'
   }
 
-  if (bytes.length >= 12 && bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
-    return 'video/mp4'
+  if (
+    bytes.length >= 12 &&
+    bytes[4] === 0x66 &&
+    bytes[5] === 0x74 &&
+    bytes[6] === 0x79 &&
+    bytes[7] === 0x70
+  ) {
+    return ISO_BASE_MEDIA_CONTENT_TYPES[asciiAt(bytes, 8, 4)]
   }
 
-  if (bytes.length >= 4 && bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3) {
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x1a &&
+    bytes[1] === 0x45 &&
+    bytes[2] === 0xdf &&
+    bytes[3] === 0xa3 &&
+    hasEbmlDocType(bytes, 'webm')
+  ) {
     return 'video/webm'
   }
 
   return undefined
 }
 
-const SNIFF_BYTE_LENGTH = 16
-
 export function hasStoredContentType(
-  contentType: string | undefined,
+  contentType: string | undefined
 ): contentType is string {
   return !!contentType && contentType !== 'application/octet-stream'
-}
-
-export function needsContentTypeSniff(contentType: string | undefined): boolean {
-  return !hasStoredContentType(contentType)
 }
 
 export function resolveContentType(
   declared: string | undefined,
   buffer: ArrayBuffer,
-  filename?: string,
+  filename?: string
 ): string {
   if (declared && declared !== 'application/octet-stream') {
     return declared
@@ -105,24 +167,6 @@ export function resolveContentType(
 
 export function contentTypeForUpload(file: File, buffer: ArrayBuffer): string {
   return resolveContentType(file.type, buffer, file.name)
-}
-
-/** Read at most the first 16 bytes from R2 when stored metadata is missing or generic. */
-export async function resolveR2ContentType(
-  r2: R2Bucket,
-  fileId: string,
-  declared: string | undefined,
-): Promise<string> {
-  if (hasStoredContentType(declared)) {
-    return declared
-  }
-
-  const head = await r2.get(fileId, {
-    range: { offset: 0, length: SNIFF_BYTE_LENGTH },
-  })
-  const buffer = head ? await head.arrayBuffer() : new ArrayBuffer(0)
-
-  return resolveContentType(declared, buffer)
 }
 
 // https://www.builder.io/blog/relative-time
