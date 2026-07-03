@@ -1,8 +1,9 @@
 import type { APIRoute } from 'astro'
 import { env } from 'cloudflare:workers'
-import ipfsHash from 'ipfs-only-hash'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'
+
+import { sha256Hex, contentTypeForUpload } from '../../utils'
 
 const Schema = zfd.formData({
   file: zfd.file(),
@@ -22,12 +23,13 @@ export const POST: APIRoute = async (context) => {
 
   const { title, file } = safeParse.data
   const buffer = await file.arrayBuffer()
-  const fileHash = await ipfsHash.of(new Uint8Array(buffer))
+  const fileHash = await sha256Hex(buffer)
+  const contentType = contentTypeForUpload(file, buffer)
 
   try {
     await env.R2.put(fileHash, buffer, {
       // The share page and /cdn route rely on contentType to render the file.
-      httpMetadata: { contentType: file.type },
+      httpMetadata: { contentType },
       customMetadata: { title },
     })
 

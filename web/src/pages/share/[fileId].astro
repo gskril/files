@@ -4,7 +4,11 @@ import { env } from 'cloudflare:workers'
 import { ShareButton } from '../../components/Button'
 import Layout from '../../layouts/Layout.astro'
 import { fileIdSchema } from '../../schemas/fileId'
-import { getRelativeTimeString } from '../../utils'
+import {
+  CONTENT_TYPE_SNIFF_BYTE_LENGTH,
+  getRelativeTimeString,
+  resolveContentType,
+} from '../../utils'
 
 const safeParse = fileIdSchema.safeParse(Astro.params)
 
@@ -13,12 +17,18 @@ if (!safeParse.success) {
 }
 
 const { fileId } = safeParse.data
-const file = await env.R2.get(fileId)
-const contentType = file?.httpMetadata?.contentType
+const file = await env.R2.get(fileId, {
+  range: { offset: 0, length: CONTENT_TYPE_SNIFF_BYTE_LENGTH },
+})
 
-if (!file || !contentType) {
+if (!file) {
   return Astro.rewrite('/404')
 }
+
+const contentType = resolveContentType(
+  file.httpMetadata?.contentType,
+  await file.arrayBuffer(),
+)
 
 const title = file.customMetadata?.title || 'Untitled'
 const relativeDate = getRelativeTimeString(file.uploaded)
@@ -26,6 +36,7 @@ const description = `Updated ${relativeDate}`
 const cdnUrl = new URL(`/cdn/${fileId}`, Astro.url).href
 const isImage = contentType.startsWith('image/')
 const isVideo = contentType.startsWith('video/')
+const isHtml = contentType === 'text/html'
 ---
 
 <Layout
@@ -66,6 +77,17 @@ const isVideo = contentType.startsWith('video/')
             class="aspect-video w-full"
             controls
           />
+        ) : isHtml ? (
+          <div class="flex flex-col items-center justify-center gap-3 px-4 py-24 text-center">
+            <span class="text-slate-600">Interactive HTML file</span>
+            <a
+              href={cdnUrl}
+              rel="noopener noreferrer"
+              class="rounded-full bg-primary px-4 py-2 text-sm font-medium text-slate-50 transition-colors hover:bg-primary-hover"
+            >
+              Open HTML preview
+            </a>
+          </div>
         ) : (
           <span class="block items-center justify-center px-4 py-24 text-center">
             Unsupported file type

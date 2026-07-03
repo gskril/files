@@ -1,8 +1,8 @@
 import { z } from 'zod'
 
-/** IPFS CIDv0 base58 hash length */
-export const FILE_ID_LENGTH = 46
+/** SHA-256 hex (current) or IPFS CIDv0 (legacy keys from before the migration) */
+export const fileIdPattern = /^([0-9a-f]{64}|Qm[1-9A-HJ-NP-Za-km-z]{44})$/
 
 export const fileIdSchema = z.object({
-  fileId: z.string().length(FILE_ID_LENGTH),
+  fileId: z.string().regex(fileIdPattern),
 })

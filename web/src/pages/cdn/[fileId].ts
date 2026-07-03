@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro'
 import { env } from 'cloudflare:workers'
 
 import { fileIdSchema } from '../../schemas/fileId'
+import { hasStoredContentType, resolveContentType } from '../../utils'
 
 export const GET: APIRoute = async (context) => {
   const safeParse = fileIdSchema.safeParse(context.params)
@@ -12,23 +13,35 @@ export const GET: APIRoute = async (context) => {
 
   const { fileId } = safeParse.data
   const file = await env.R2.get(fileId)
-  const contentType = file?.httpMetadata?.contentType
 
-  if (!file || !contentType) {
+  if (!file) {
     return new Response(JSON.stringify({ error: 'File not found' }), {
       status: 404,
       headers: { 'Content-Type': 'application/json' },
     })
   }
 
-  return new Response(await file.arrayBuffer(), {
-    headers: {
-      'Content-Type': contentType,
-      'Cache-Control': 'public, max-age=31536000',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Allow-Methods': 'GET',
-      'Access-Control-Max-Age': '86400',
-    },
+  const declared = file.httpMetadata?.contentType
+  const buffer = await file.arrayBuffer()
+  const contentType = hasStoredContentType(declared)
+    ? declared
+    : resolveContentType(declared, buffer)
+
+  const headers: Record<string, string> = {
+    'Content-Type': contentType,
+    'Cache-Control': 'public, max-age=31536000',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET',
+    'Access-Control-Max-Age': '86400',
+    'X-Content-Type-Options': 'nosniff',
+  }
+
+  if (contentType === 'text/html') {
+    headers['Content-Security-Policy'] = 'sandbox allow-scripts'
+  }
+
+  return new Response(buffer, {
+    headers,
   })
 }

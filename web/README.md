@@ -44,6 +44,8 @@ The dev server runs at `http://localhost:4321` with simulated local bindings, in
 | `/api/create` | POST | Upload a file (requires `x-admin-secret` header) |
 | `/api/list` | GET | List uploaded files (requires `x-admin-secret` header) |
 
+File keys are the SHA-256 hex hash of the file contents. Legacy IPFS CIDv0 keys (`Qm...`) are still accepted for files uploaded before the migration.
+
 ## Scripts
 
 | Command | Description |
