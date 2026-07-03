@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro'
 import { env } from 'cloudflare:workers'
 
 import { fileIdSchema } from '../../schemas/fileId'
-import { resolveContentType } from '../../utils'
+import { hasStoredContentType, resolveContentType } from '../../utils'
 
 export const GET: APIRoute = async (context) => {
   const safeParse = fileIdSchema.safeParse(context.params)
@@ -21,8 +21,11 @@ export const GET: APIRoute = async (context) => {
     })
   }
 
+  const declared = file.httpMetadata?.contentType
   const buffer = await file.arrayBuffer()
-  const contentType = resolveContentType(file.httpMetadata?.contentType, buffer)
+  const contentType = hasStoredContentType(declared)
+    ? declared
+    : resolveContentType(declared, buffer)
 
   return new Response(buffer, {
     headers: {

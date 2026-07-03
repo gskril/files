@@ -74,6 +74,18 @@ function sniffContentType(buffer: ArrayBuffer): string | undefined {
   return undefined
 }
 
+const SNIFF_BYTE_LENGTH = 16
+
+export function hasStoredContentType(
+  contentType: string | undefined,
+): contentType is string {
+  return !!contentType && contentType !== 'application/octet-stream'
+}
+
+export function needsContentTypeSniff(contentType: string | undefined): boolean {
+  return !hasStoredContentType(contentType)
+}
+
 export function resolveContentType(
   declared: string | undefined,
   buffer: ArrayBuffer,
@@ -93,6 +105,24 @@ export function resolveContentType(
 
 export function contentTypeForUpload(file: File, buffer: ArrayBuffer): string {
   return resolveContentType(file.type, buffer, file.name)
+}
+
+/** Read at most the first 16 bytes from R2 when stored metadata is missing or generic. */
+export async function resolveR2ContentType(
+  r2: R2Bucket,
+  fileId: string,
+  declared: string | undefined,
+): Promise<string> {
+  if (hasStoredContentType(declared)) {
+    return declared
+  }
+
+  const head = await r2.get(fileId, {
+    range: { offset: 0, length: SNIFF_BYTE_LENGTH },
+  })
+  const buffer = head ? await head.arrayBuffer() : new ArrayBuffer(0)
+
+  return resolveContentType(declared, buffer)
 }
 
 // https://www.builder.io/blog/relative-time
