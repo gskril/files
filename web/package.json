@@ -4,9 +4,7 @@
   "private": true,
   "packageManager": "pnpm@11.9.0",
   "scripts": {
-    "dev": "pnpm generate:openapi && astro dev",
-    "generate:openapi": "tsx scripts/generate-openapi.ts",
-    "prebuild": "pnpm generate:openapi",
+    "dev": "astro dev",
     "build": "astro build",
     "check": "astro check",
     "preview": "astro build && wrangler dev",
@@ -27,7 +25,6 @@
     "zod-form-data": "^3.0.2"
   },
   "devDependencies": {
-    "@asteasolutions/zod-to-openapi": "^8.0.0",
     "@astrojs/check": "^0.9.9",
     "@trivago/prettier-plugin-sort-imports": "^6.0.2",
     "@types/react": "^19.2.17",
@@ -35,7 +32,6 @@
     "prettier": "^3.9.4",
     "prettier-plugin-tailwindcss": "^0.8.0",
     "tailwindcss": "^4.3.2",
-    "tsx": "^4.20.3",
     "typescript": "^6.0.3",
     "wrangler": "4.106.0"
   }

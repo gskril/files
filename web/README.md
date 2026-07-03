@@ -46,15 +46,12 @@ The dev server runs at `http://localhost:4321` with simulated local bindings, in
 
 File keys are the SHA-256 hex hash of the file contents. Legacy IPFS CIDv0 keys (`Qm...`) are still accepted for files uploaded before the migration.
 
-An OpenAPI spec is generated from shared Zod schemas at build time and served at `/openapi.json`.
-
 ## Scripts
 
 | Command | Description |
 |---|---|
 | `pnpm dev` | Start local dev server |
-| `pnpm build` | Generate OpenAPI spec and build for production |
-| `pnpm generate:openapi` | Regenerate `public/openapi.json` from Zod schemas |
+| `pnpm build` | Build for production |
 | `pnpm preview` | Build and preview locally with Wrangler |
 | `pnpm check` | Run Astro type checking |
 | `pnpm cf-typegen` | Regenerate Cloudflare binding types |

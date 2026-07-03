@@ -5,7 +5,6 @@
 # astro
 /dist
 /.astro
-/public/openapi.json
 
 # misc
 .DS_Store
