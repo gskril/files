@@ -4,7 +4,7 @@ import { env } from 'cloudflare:workers'
 import { ShareButton } from '../../components/Button'
 import Layout from '../../layouts/Layout.astro'
 import { fileIdSchema } from '../../schemas/fileId'
-import { getRelativeTimeString } from '../../utils'
+import { getRelativeTimeString, resolveContentType } from '../../utils'
 
 const safeParse = fileIdSchema.safeParse(Astro.params)
 
@@ -14,11 +14,13 @@ if (!safeParse.success) {
 
 const { fileId } = safeParse.data
 const file = await env.R2.get(fileId)
-const contentType = file?.httpMetadata?.contentType
 
-if (!file || !contentType) {
+if (!file) {
   return Astro.rewrite('/404')
 }
+
+const buffer = await file.arrayBuffer()
+const contentType = resolveContentType(file.httpMetadata?.contentType, buffer)
 
 const title = file.customMetadata?.title || 'Untitled'
 const relativeDate = getRelativeTimeString(file.uploaded)

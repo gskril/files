@@ -5,6 +5,96 @@ export async function sha256Hex(buffer: ArrayBuffer): Promise<string> {
     .join('')
 }
 
+const EXTENSION_CONTENT_TYPES: Record<string, string> = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  svg: 'image/svg+xml',
+  mp4: 'video/mp4',
+  webm: 'video/webm',
+  mov: 'video/quicktime',
+}
+
+function contentTypeFromFilename(filename: string): string | undefined {
+  const ext = filename.split('.').pop()?.toLowerCase()
+  return ext ? EXTENSION_CONTENT_TYPES[ext] : undefined
+}
+
+function sniffContentType(buffer: ArrayBuffer): string | undefined {
+  const bytes = new Uint8Array(buffer.slice(0, 16))
+
+  if (
+    bytes.length >= 8 &&
+    bytes[0] === 0x89 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x4e &&
+    bytes[3] === 0x47
+  ) {
+    return 'image/png'
+  }
+
+  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+    return 'image/jpeg'
+  }
+
+  if (
+    bytes.length >= 6 &&
+    bytes[0] === 0x47 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x38
+  ) {
+    return 'image/gif'
+  }
+
+  if (
+    bytes.length >= 12 &&
+    bytes[0] === 0x52 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x46 &&
+    bytes[8] === 0x57 &&
+    bytes[9] === 0x45 &&
+    bytes[10] === 0x42 &&
+    bytes[11] === 0x50
+  ) {
+    return 'image/webp'
+  }
+
+  if (bytes.length >= 12 && bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
+    return 'video/mp4'
+  }
+
+  if (bytes.length >= 4 && bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3) {
+    return 'video/webm'
+  }
+
+  return undefined
+}
+
+export function resolveContentType(
+  declared: string | undefined,
+  buffer: ArrayBuffer,
+  filename?: string,
+): string {
+  if (declared && declared !== 'application/octet-stream') {
+    return declared
+  }
+
+  return (
+    sniffContentType(buffer) ??
+    (filename ? contentTypeFromFilename(filename) : undefined) ??
+    declared ??
+    'application/octet-stream'
+  )
+}
+
+export function contentTypeForUpload(file: File, buffer: ArrayBuffer): string {
+  return resolveContentType(file.type, buffer, file.name)
+}
+
 // https://www.builder.io/blog/relative-time
 export function getRelativeTimeString(date: Date | number): string {
   // Allow dates or times to be passed
