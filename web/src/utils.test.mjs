@@ -88,12 +88,22 @@ test('prefers a specific declared type and falls back to the filename', () => {
   assert.equal(resolveContentType('', buffer(), 'clip.mov'), 'video/quicktime')
 })
 
-test('preserves declared HTML without inferring it from untrusted content', () => {
+test('detects HTML from its doctype', () => {
   const html = buffer(...Buffer.from('<!doctype html><title>Test</title>'))
 
   assert.equal(resolveContentType('text/html', html, 'index.html'), 'text/html')
+  assert.equal(resolveContentType(undefined, html, 'index.html'), 'text/html')
   assert.equal(
-    resolveContentType(undefined, html, 'index.html'),
+    resolveContentType('application/octet-stream', html),
+    'text/html'
+  )
+})
+
+test('does not infer HTML from arbitrary markup', () => {
+  const markup = buffer(...Buffer.from('<script>alert(1)</script>'))
+
+  assert.equal(
+    resolveContentType(undefined, markup),
     'application/octet-stream'
   )
 })

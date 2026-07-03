@@ -36,6 +36,7 @@ const description = `Updated ${relativeDate}`
 const cdnUrl = new URL(`/cdn/${fileId}`, Astro.url).href
 const isImage = contentType.startsWith('image/')
 const isVideo = contentType.startsWith('video/')
+const isHtml = contentType === 'text/html'
 ---
 
 <Layout
@@ -76,6 +77,18 @@ const isVideo = contentType.startsWith('video/')
             class="aspect-video w-full"
             controls
           />
+        ) : isHtml ? (
+          <div class="flex flex-col items-center justify-center gap-3 px-4 py-24 text-center">
+            <span class="text-slate-600">Interactive HTML file</span>
+            <a
+              href={cdnUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="rounded-full bg-primary px-4 py-2 text-sm font-medium text-slate-50 transition-colors hover:bg-primary-hover"
+            >
+              Open HTML preview
+            </a>
+          </div>
         ) : (
           <span class="block items-center justify-center px-4 py-24 text-center">
             Unsupported file type

@@ -68,6 +68,18 @@ function hasEbmlDocType(bytes: Uint8Array, docType: string): boolean {
   return false
 }
 
+function isHtml(bytes: Uint8Array): boolean {
+  const prefix = new TextDecoder()
+    .decode(bytes)
+    .replace(/^\uFEFF/, '')
+    .trimStart()
+    .toLowerCase()
+
+  return (
+    /^<!doctype\s+html(?:\s|>)/.test(prefix) || /^<html(?:\s|>)/.test(prefix)
+  )
+}
+
 function sniffContentType(buffer: ArrayBuffer): string | undefined {
   const bytes = new Uint8Array(buffer.slice(0, CONTENT_TYPE_SNIFF_BYTE_LENGTH))
 
@@ -137,6 +149,10 @@ function sniffContentType(buffer: ArrayBuffer): string | undefined {
     hasEbmlDocType(bytes, 'webm')
   ) {
     return 'video/webm'
+  }
+
+  if (isHtml(bytes)) {
+    return 'text/html'
   }
 
   return undefined

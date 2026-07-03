@@ -27,14 +27,21 @@ export const GET: APIRoute = async (context) => {
     ? declared
     : resolveContentType(declared, buffer)
 
+  const headers: Record<string, string> = {
+    'Content-Type': contentType,
+    'Cache-Control': 'public, max-age=31536000',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET',
+    'Access-Control-Max-Age': '86400',
+    'X-Content-Type-Options': 'nosniff',
+  }
+
+  if (contentType === 'text/html') {
+    headers['Content-Security-Policy'] = 'sandbox allow-scripts'
+  }
+
   return new Response(buffer, {
-    headers: {
-      'Content-Type': contentType,
-      'Cache-Control': 'public, max-age=31536000',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Allow-Methods': 'GET',
-      'Access-Control-Max-Age': '86400',
-    },
+    headers,
   })
 }
