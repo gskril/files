@@ -6,7 +6,7 @@ export function getRelativeTimeString(date: Date | number): string {
   // Get the amount of seconds between the given date and now
   const deltaSeconds = Math.round((timeMs - Date.now()) / 1000)
 
-  // Array reprsenting one minute, hour, day, week, month, etc in seconds
+  // Array representing one minute, hour, day, week, month, etc in seconds
   const cutoffs = [
     60,
     3600,

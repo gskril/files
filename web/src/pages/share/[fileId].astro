@@ -1,0 +1,77 @@
+---
+import { env } from 'cloudflare:workers'
+
+import { ShareButton } from '../../components/Button'
+import Layout from '../../layouts/Layout.astro'
+import { fileIdSchema } from '../../schemas/fileId'
+import { getRelativeTimeString } from '../../utils'
+
+const safeParse = fileIdSchema.safeParse(Astro.params)
+
+if (!safeParse.success) {
+  return Astro.rewrite('/404')
+}
+
+const { fileId } = safeParse.data
+const file = await env.R2.get(fileId)
+const contentType = file?.httpMetadata?.contentType
+
+if (!file || !contentType) {
+  return Astro.rewrite('/404')
+}
+
+const title = file.customMetadata?.title || 'Untitled'
+const relativeDate = getRelativeTimeString(file.uploaded)
+const description = `Updated ${relativeDate}`
+const cdnUrl = new URL(`/cdn/${fileId}`, Astro.url).href
+const isImage = contentType.startsWith('image/')
+const isVideo = contentType.startsWith('video/')
+---
+
+<Layout
+  title={title}
+  description={description}
+  og={{
+    title,
+    description,
+    url: Astro.url.href,
+    type: isVideo ? 'video.other' : 'website',
+    ...(isImage && { image: cdnUrl }),
+  }}
+>
+  <main
+    class="mx-auto flex min-h-svh max-w-7xl flex-col justify-center p-4 sm:p-10"
+  >
+    <div
+      class="flex flex-col items-center justify-between gap-6 sm:flex-row"
+    >
+      <div class="flex flex-col gap-0.5">
+        <h1 class="text-2xl font-bold">{title}</h1>
+        <span class="block text-sm text-slate-500">
+          Updated{' '}
+          <time datetime={file.uploaded.toString()}>{relativeDate}</time>
+        </span>
+      </div>
+
+      <ShareButton fileId={fileId} client:load />
+    </div>
+
+    <div class="mt-3 overflow-hidden rounded-lg bg-slate-200 shadow-md">
+      {
+        isImage ? (
+          <img src={`/cdn/${file.key}`} alt={title} />
+        ) : isVideo ? (
+          <video
+            src={`/cdn/${file.key}`}
+            class="aspect-video w-full"
+            controls
+          />
+        ) : (
+          <span class="block items-center justify-center px-4 py-24 text-center">
+            Unsupported file type
+          </span>
+        )
+      }
+    </div>
+  </main>
+</Layout>
