@@ -1,6 +1,6 @@
 # Raycast Extension
 
-This extension is responsible for compressing video files and uploading them to Cloudflare R2 via the Next.js API.
+This extension is responsible for compressing video files and uploading them to Cloudflare R2 via the file uploader API.
 
 > [!NOTE]  
 > You'll need to have ffmpeg installed on your system to use video compression (recommended).

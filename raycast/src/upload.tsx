@@ -50,11 +50,7 @@ export default function Command() {
       filePath = await compressVideo(originalFilePath, setFfmpegProgress);
     }
 
-    // fileFromPath does not infer a MIME type, so look it up explicitly —
-    // the server stores it and serves the file with it
-    const file = await fileFromPath(filePath, {
-      type: mime.lookup(filePath) || "application/octet-stream",
-    });
+    const file = await fileFromPath(filePath);
 
     const formData = new FormData();
     formData.append("file", file);

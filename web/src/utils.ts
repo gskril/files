@@ -1,10 +1,3 @@
-import { z } from 'zod'
-
-// SHA-256 hex (current) or IPFS CIDv0 (legacy keys from before the migration)
-export const FileIdSchema = z
-  .string()
-  .regex(/^([0-9a-f]{64}|Qm[1-9A-HJ-NP-Za-km-z]{44})$/)
-
 export async function sha256Hex(buffer: ArrayBuffer): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', buffer)
   return Array.from(new Uint8Array(digest))
@@ -20,7 +13,7 @@ export function getRelativeTimeString(date: Date | number): string {
   // Get the amount of seconds between the given date and now
   const deltaSeconds = Math.round((timeMs - Date.now()) / 1000)
 
-  // Array reprsenting one minute, hour, day, week, month, etc in seconds
+  // Array representing one minute, hour, day, week, month, etc in seconds
   const cutoffs = [
     60,
     3600,

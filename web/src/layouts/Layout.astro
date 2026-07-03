@@ -1,0 +1,53 @@
+---
+import { Font } from 'astro:assets'
+
+import '../styles/globals.css'
+
+interface Props {
+  title: string
+  description?: string
+  og?: {
+    title?: string
+    description?: string
+    image?: string
+    url?: string
+    type?: string
+  }
+}
+
+const { title, description = 'Greg shared a file with you', og } = Astro.props
+const ogTitle = og?.title ?? title
+const ogDescription = og?.description ?? description
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {
+      og && (
+        <>
+          <meta property="og:title" content={ogTitle} />
+          {ogDescription && (
+            <meta property="og:description" content={ogDescription} />
+          )}
+          {og.image && <meta property="og:image" content={og.image} />}
+          {og.url && <meta property="og:url" content={og.url} />}
+          {og.type && <meta property="og:type" content={og.type} />}
+          <meta
+            name="twitter:card"
+            content={og.image ? 'summary_large_image' : 'summary'}
+          />
+          {og.image && <meta name="twitter:image" content={og.image} />}
+        </>
+      )
+    }
+    <Font cssVariable="--font-inter" preload />
+  </head>
+  <body class="bg-base font-sans text-slate-900">
+    <slot />
+  </body>
+</html>
