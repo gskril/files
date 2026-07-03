@@ -17,9 +17,11 @@ export default defineConfig({
       subsets: ['latin'],
     },
   ],
-  // The API is authenticated via the x-admin-secret header (not cookies), and
-  // clients like the Raycast extension POST forms without an Origin header,
-  // which Astro's CSRF check would otherwise reject.
+  // checkOrigin must stay false: Astro 7 applies CSRF origin checks globally (no
+  // per-route opt-out) to POST/PATCH/PUT/DELETE with form-like Content-Types.
+  // The Raycast extension POSTs multipart/form-data via axios with only
+  // x-admin-secret — no Origin header — so checkOrigin: true returns 403.
+  // API auth is enforced in middleware via x-admin-secret instead.
   security: { checkOrigin: false },
   adapter: cloudflare({
     imageService: 'passthrough',

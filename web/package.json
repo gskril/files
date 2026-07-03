@@ -9,6 +9,7 @@
     "check": "astro check",
     "preview": "astro build && wrangler dev",
     "prettier": "prettier --write .",
+    "postinstall": "wrangler types",
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
