@@ -2,6 +2,7 @@
 import { env } from 'cloudflare:workers'
 
 import { ShareButton } from '../../components/Button'
+import { DataPreview } from '../../components/DataPreview'
 import Layout from '../../layouts/Layout.astro'
 import { fileIdSchema } from '../../schemas/fileId'
 import {
@@ -39,6 +40,10 @@ const isImage = contentType.startsWith('image/')
 const isVideo = contentType.startsWith('video/')
 const isHtml = contentType === 'text/html'
 const isPdf = contentType === 'application/pdf'
+const isJson = contentType === 'application/json'
+const isCsv = contentType === 'text/csv'
+const isDataFile = isJson || isCsv
+const filename = file.customMetadata?.filename || title
 ---
 
 <Layout
@@ -131,6 +136,55 @@ const isPdf = contentType === 'application/pdf'
             src={`${cdnUrl}#view=FitH&toolbar=1`}
             title={`${title} PDF preview`}
             class="hidden h-[calc(100svh-14rem)] min-h-[32rem] max-h-[72rem] w-full bg-slate-100 sm:block"
+          />
+        </section>
+      ) : isDataFile ? (
+        <section class="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10">
+          <div class="flex flex-col gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex min-w-0 items-center gap-3">
+              <div
+                class:list={[
+                  'flex size-10 shrink-0 items-center justify-center rounded-xl text-[11px] font-bold tracking-wide ring-1',
+                  isJson
+                    ? 'bg-sky-50 text-sky-700 ring-sky-100'
+                    : 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+                ]}
+              >
+                {isJson ? 'JSON' : 'CSV'}
+              </div>
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold text-slate-800">
+                  {filename}
+                </p>
+                <p class="text-xs text-slate-500">
+                  {isJson ? 'JSON data · Formatted preview' : 'CSV data · Table preview'}
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <a
+                href={cdnUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+              >
+                Open raw
+              </a>
+              <a
+                href={cdnUrl}
+                download={filename}
+                class="inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+              >
+                Download
+              </a>
+            </div>
+          </div>
+
+          <DataPreview
+            src={`/cdn/${file.key}`}
+            kind={isJson ? 'json' : 'csv'}
+            client:load
           />
         </section>
       ) : (
