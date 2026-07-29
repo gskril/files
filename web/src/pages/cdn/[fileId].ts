@@ -23,6 +23,51 @@ function inlineContentDisposition(filename: string): string {
   return `inline; filename="${safeAsciiFilename}"; filename*=UTF-8''${encodedFilename}`
 }
 
+function fallbackFilenameForContentType(
+  contentType: string
+): string | undefined {
+  switch (contentType) {
+    case 'image/png':
+      return 'image.png'
+    case 'image/jpeg':
+      return 'image.jpg'
+    case 'image/gif':
+      return 'image.gif'
+    case 'image/webp':
+      return 'image.webp'
+    case 'image/avif':
+      return 'image.avif'
+    case 'video/mp4':
+      return 'video.mp4'
+    case 'video/webm':
+      return 'video.webm'
+    case 'video/quicktime':
+      return 'video.mov'
+    case 'audio/mpeg':
+      return 'audio.mp3'
+    case 'audio/mp4':
+      return 'audio.m4a'
+    case 'audio/aac':
+      return 'audio.aac'
+    case 'audio/wav':
+      return 'audio.wav'
+    case 'audio/flac':
+      return 'audio.flac'
+    case 'audio/ogg':
+      return 'audio.ogg'
+    case 'text/html':
+      return 'document.html'
+    case 'application/pdf':
+      return 'document.pdf'
+    case 'application/json':
+      return 'data.json'
+    case 'text/csv':
+      return 'data.csv'
+    default:
+      return undefined
+  }
+}
+
 export const GET: APIRoute = async (context) => {
   const safeParse = fileIdSchema.safeParse(context.params)
 
@@ -98,18 +143,8 @@ export const GET: APIRoute = async (context) => {
     headers.set('Content-Length', String(file.size))
   }
 
-  let responseFilename = file.customMetadata?.filename
-  if (!responseFilename) {
-    const fallbackFilename =
-      contentType === 'application/pdf'
-        ? 'document.pdf'
-        : contentType === 'application/json'
-          ? 'data.json'
-          : contentType === 'text/csv'
-            ? 'data.csv'
-            : undefined
-    responseFilename = fallbackFilename
-  }
+  const responseFilename =
+    file.customMetadata?.filename ?? fallbackFilenameForContentType(contentType)
 
   if (responseFilename) {
     headers.set(

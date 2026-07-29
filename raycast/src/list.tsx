@@ -74,7 +74,7 @@ export default function FetchData() {
         const cdnUrl = `${baseUrl}/cdn/${item.key}`;
         const presentation = filePresentation(item.httpMetadata?.contentType);
         const title = item.customMetadata?.title || item.customMetadata?.filename || "Untitled";
-        const canOpenRaw = ["PDF", "JSON", "CSV", "Audio"].includes(presentation.label);
+        const canOpenRaw = presentation.label === "PDF";
 
         return (
           <List.Item
