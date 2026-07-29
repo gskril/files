@@ -24,7 +24,6 @@ import { useSelectedItem } from "./useSelectedItem";
 type Values = {
   title?: string;
   filePath: string[];
-  shouldCompress: boolean;
 };
 
 const FILES_AND_FOLDERS_SETTINGS = "x-apple.systempreferences:com.apple.preference.security?Privacy_FilesAndFolders";
@@ -61,17 +60,15 @@ async function showFilePermissionError(filePath: string) {
 export default function Command() {
   const { selectedItem, selectionSource, setSelectedItem } = useSelectedItem();
   const [isLoading, setIsLoading] = useState(false);
-  const [isVideo, setIsVideo] = useState(false);
   const [shouldCompress, setShouldCompress] = useState(true);
   const [ffmpegProgress, setFfmpegProgress] = useState<number>(0);
   const [title, setTitle] = useState("");
   const [fileError, setFileError] = useState<string>();
   const filePickerRef = useRef<Form.FilePicker>(null);
+  const selectedContentType = selectedItem ? mime.lookup(selectedItem) : false;
+  const isVideo = Boolean(selectedContentType && selectedContentType.startsWith("video/"));
 
   useEffect(() => {
-    const fileType = selectedItem ? mime.lookup(selectedItem) : false;
-    setIsVideo(Boolean(fileType && fileType.startsWith("video/")));
-
     if (selectedItem) {
       setTitle(path.basename(selectedItem, path.extname(selectedItem)));
     }
@@ -87,16 +84,24 @@ export default function Command() {
       return;
     }
 
-    let filePath = originalFilePath;
+    let uploadPath = originalFilePath;
 
     try {
       await fs.promises.access(originalFilePath, fs.constants.R_OK);
 
       if (isVideo && shouldCompress) {
-        filePath = await compressVideo(originalFilePath, setFfmpegProgress);
+        uploadPath = await compressVideo(originalFilePath, setFfmpegProgress);
       }
 
-      const file = await fileFromPath(filePath);
+      const originalFilename = path.basename(originalFilePath);
+      const uploadFilename =
+        uploadPath === originalFilePath
+          ? originalFilename
+          : `${path.basename(originalFilename, path.extname(originalFilename))}.mp4`;
+      const uploadContentType = mime.lookup(uploadPath) || undefined;
+      const file = await fileFromPath(uploadPath, uploadFilename, {
+        type: uploadContentType,
+      });
 
       const formData = new FormData();
       formData.append("file", file);
@@ -151,8 +156,8 @@ export default function Command() {
         await showToast({ title: "Upload failed", message, style: Toast.Style.Failure });
       }
     } finally {
-      if (filePath !== originalFilePath && fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      if (uploadPath !== originalFilePath && fs.existsSync(uploadPath)) {
+        fs.unlinkSync(uploadPath);
       }
 
       setIsLoading(false);
@@ -194,7 +199,7 @@ export default function Command() {
 
       {isVideo && (
         <Form.Checkbox
-          id="_"
+          id="compressVideo"
           label="Compress before uploading"
           title="Video"
           defaultValue={true}

@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro'
 import { env } from 'cloudflare:workers'
 
+import { parseByteRange } from '../../httpRange'
 import { fileIdSchema } from '../../schemas/fileId'
 import {
   CONTENT_TYPE_SNIFF_BYTE_LENGTH,
@@ -89,6 +90,28 @@ export const GET: APIRoute = async (context) => {
     })
   }
 
+  const headers = new Headers({
+    'Cache-Control': 'public, max-age=31536000',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type, Range',
+    'Access-Control-Allow-Methods': 'GET',
+    'Access-Control-Expose-Headers':
+      'Accept-Ranges, Content-Length, Content-Range',
+    'Access-Control-Max-Age': '86400',
+    'Accept-Ranges': 'bytes',
+    'X-Content-Type-Options': 'nosniff',
+  })
+  const rangeResult = requestedRange
+    ? parseByteRange(requestedRange, file.size)
+    : { kind: 'ignore' as const }
+
+  if (rangeResult.kind === 'unsatisfiable') {
+    await file.body.cancel()
+    headers.set('Content-Range', `bytes */${file.size}`)
+    headers.set('Content-Length', '0')
+    return new Response(null, { status: 416, headers })
+  }
+
   const declared = file.httpMetadata?.contentType
   let contentType: string
 
@@ -109,35 +132,15 @@ export const GET: APIRoute = async (context) => {
     )
   }
 
-  const headers = new Headers({
-    'Content-Type': contentType,
-    'Cache-Control': 'public, max-age=31536000',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Range',
-    'Access-Control-Allow-Methods': 'GET',
-    'Access-Control-Expose-Headers':
-      'Accept-Ranges, Content-Length, Content-Range',
-    'Access-Control-Max-Age': '86400',
-    'Accept-Ranges': 'bytes',
-    'X-Content-Type-Options': 'nosniff',
-  })
+  headers.set('Content-Type', contentType)
 
   let status = 200
-  if (requestedRange && file.range) {
-    const offset =
-      'suffix' in file.range
-        ? Math.max(file.size - file.range.suffix, 0)
-        : (file.range.offset ?? 0)
-    const length =
-      'suffix' in file.range
-        ? Math.min(file.range.suffix, file.size)
-        : (file.range.length ?? file.size - offset)
-
+  if (rangeResult.kind === 'range' && file.range) {
     headers.set(
       'Content-Range',
-      `bytes ${offset}-${offset + length - 1}/${file.size}`
+      `bytes ${rangeResult.offset}-${rangeResult.offset + rangeResult.length - 1}/${file.size}`
     )
-    headers.set('Content-Length', String(length))
+    headers.set('Content-Length', String(rangeResult.length))
     status = 206
   } else {
     headers.set('Content-Length', String(file.size))

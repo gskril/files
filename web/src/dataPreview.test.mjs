@@ -30,3 +30,7 @@ test('does not add an empty row for a trailing newline', () => {
     ['1', '2'],
   ])
 })
+
+test('preserves a single empty quoted field', () => {
+  assert.deepEqual(parseCsv('""'), [['']])
+})
