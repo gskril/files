@@ -1,6 +1,6 @@
 # Raycast Extension
 
-This extension is responsible for compressing video files and uploading them to Cloudflare R2 via the file uploader API.
+This extension uploads images, audio, videos, HTML, PDF, JSON, and CSV files to Cloudflare R2 via the file uploader API. Videos can be compressed before upload.
 
 > [!NOTE]  
 > You'll need to have ffmpeg installed on your system to use video compression (recommended).
