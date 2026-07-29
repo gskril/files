@@ -99,6 +99,77 @@ test('detects HTML from its doctype', () => {
   )
 })
 
+test('detects PDFs by signature and filename', () => {
+  const pdf = buffer(...Buffer.from('%PDF-1.7'))
+
+  assert.equal(resolveContentType(undefined, pdf), 'application/pdf')
+  assert.equal(
+    resolveContentType('application/octet-stream', buffer(), 'document.pdf'),
+    'application/pdf'
+  )
+})
+
+test('detects common audio formats by signature and filename', () => {
+  assert.equal(
+    resolveContentType(
+      'application/octet-stream',
+      buffer(...Buffer.from('ID3')),
+      'track'
+    ),
+    'audio/mpeg'
+  )
+  assert.equal(
+    resolveContentType('application/octet-stream', buffer(), 'track.mp3'),
+    'audio/mpeg'
+  )
+  assert.equal(
+    resolveContentType(
+      undefined,
+      buffer(...Buffer.from('RIFF'), 0, 0, 0, 0, ...Buffer.from('WAVE'))
+    ),
+    'audio/wav'
+  )
+  assert.equal(
+    resolveContentType(undefined, buffer(...Buffer.from('fLaC'))),
+    'audio/flac'
+  )
+})
+
+test('detects JSON and CSV from filenames when clients send generic types', () => {
+  assert.equal(
+    resolveContentType('application/octet-stream', buffer(), 'data.json'),
+    'application/json'
+  )
+  assert.equal(
+    resolveContentType('text/plain', buffer(), 'report.csv'),
+    'text/csv'
+  )
+})
+
+test('normalizes JSON and CSV MIME aliases', () => {
+  assert.equal(
+    resolveContentType('text/json; charset=utf-8', buffer()),
+    'application/json'
+  )
+  assert.equal(resolveContentType('application/csv', buffer()), 'text/csv')
+  assert.equal(
+    resolveContentType('application/x-json', buffer()),
+    'application/json'
+  )
+  assert.equal(resolveContentType('text/x-csv', buffer()), 'text/csv')
+  assert.equal(
+    resolveContentType('application/vnd.ms-excel', buffer(), 'spreadsheet.csv'),
+    'text/csv'
+  )
+})
+
+test('requires the complete PDF signature', () => {
+  assert.equal(
+    resolveContentType(undefined, buffer(...Buffer.from('%PDF'))),
+    'application/octet-stream'
+  )
+})
+
 test('does not infer HTML from arbitrary markup', () => {
   const markup = buffer(...Buffer.from('<script>alert(1)</script>'))
 

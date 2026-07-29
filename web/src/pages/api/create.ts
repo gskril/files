@@ -3,7 +3,7 @@ import { env } from 'cloudflare:workers'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'
 
-import { sha256Hex, contentTypeForUpload } from '../../utils'
+import { contentTypeForUpload, sha256Hex } from '../../utils'
 
 const Schema = zfd.formData({
   file: zfd.file(),
@@ -25,17 +25,26 @@ export const POST: APIRoute = async (context) => {
   const buffer = await file.arrayBuffer()
   const fileHash = await sha256Hex(buffer)
   const contentType = contentTypeForUpload(file, buffer)
+  const filename = file.name || 'file'
 
   try {
     await env.R2.put(fileHash, buffer, {
       // The share page and /cdn route rely on contentType to render the file.
       httpMetadata: { contentType },
-      customMetadata: { title },
+      customMetadata: { title, filename },
     })
 
-    return new Response(JSON.stringify({ success: true, key: fileHash }), {
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return new Response(
+      JSON.stringify({
+        success: true,
+        key: fileHash,
+        contentType,
+        filename,
+      }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+      }
+    )
   } catch (err) {
     return new Response(
       JSON.stringify({ success: false, error: 'Failed to create file' }),

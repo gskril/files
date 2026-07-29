@@ -18,6 +18,16 @@ const EXTENSION_CONTENT_TYPES: Record<string, string> = {
   mp4: 'video/mp4',
   webm: 'video/webm',
   mov: 'video/quicktime',
+  mp3: 'audio/mpeg',
+  m4a: 'audio/mp4',
+  aac: 'audio/aac',
+  wav: 'audio/wav',
+  flac: 'audio/flac',
+  ogg: 'audio/ogg',
+  oga: 'audio/ogg',
+  pdf: 'application/pdf',
+  json: 'application/json',
+  csv: 'text/csv',
 }
 
 function contentTypeFromFilename(filename: string): string | undefined {
@@ -26,6 +36,25 @@ function contentTypeFromFilename(filename: string): string | undefined {
 }
 
 export const CONTENT_TYPE_SNIFF_BYTE_LENGTH = 64
+
+export function normalizeContentType(
+  contentType: string | undefined
+): string | undefined {
+  const normalized = contentType?.split(';', 1)[0]?.trim().toLowerCase()
+
+  if (normalized === 'text/json' || normalized === 'application/x-json') {
+    return 'application/json'
+  }
+  if (
+    normalized === 'application/csv' ||
+    normalized === 'text/comma-separated-values' ||
+    normalized === 'text/x-csv'
+  ) {
+    return 'text/csv'
+  }
+
+  return normalized || undefined
+}
 
 const ISO_BASE_MEDIA_CONTENT_TYPES: Record<string, string> = {
   isom: 'video/mp4',
@@ -38,6 +67,7 @@ const ISO_BASE_MEDIA_CONTENT_TYPES: Record<string, string> = {
   mp42: 'video/mp4',
   avc1: 'video/mp4',
   'M4V ': 'video/mp4',
+  'M4A ': 'audio/mp4',
   'qt  ': 'video/quicktime',
   avif: 'image/avif',
   avis: 'image/avif',
@@ -132,6 +162,58 @@ function sniffContentType(buffer: ArrayBuffer): string | undefined {
 
   if (
     bytes.length >= 12 &&
+    bytes[0] === 0x52 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x46 &&
+    bytes[8] === 0x57 &&
+    bytes[9] === 0x41 &&
+    bytes[10] === 0x56 &&
+    bytes[11] === 0x45
+  ) {
+    return 'audio/wav'
+  }
+
+  if (
+    bytes.length >= 4 &&
+    bytes[0] === 0x66 &&
+    bytes[1] === 0x4c &&
+    bytes[2] === 0x61 &&
+    bytes[3] === 0x43
+  ) {
+    return 'audio/flac'
+  }
+
+  if (
+    bytes.length >= 3 &&
+    bytes[0] === 0x49 &&
+    bytes[1] === 0x44 &&
+    bytes[2] === 0x33
+  ) {
+    return 'audio/mpeg'
+  }
+
+  if (
+    bytes.length >= 3 &&
+    bytes[0] === 0xff &&
+    (bytes[1] & 0xe0) === 0xe0 &&
+    (bytes[1] & 0x06) !== 0 &&
+    (bytes[2] & 0xf0) !== 0xf0 &&
+    (bytes[2] & 0x0c) !== 0x0c
+  ) {
+    return 'audio/mpeg'
+  }
+
+  if (
+    bytes.length >= 2 &&
+    bytes[0] === 0xff &&
+    (bytes[1] === 0xf1 || bytes[1] === 0xf9)
+  ) {
+    return 'audio/aac'
+  }
+
+  if (
+    bytes.length >= 12 &&
     bytes[4] === 0x66 &&
     bytes[5] === 0x74 &&
     bytes[6] === 0x79 &&
@@ -151,6 +233,17 @@ function sniffContentType(buffer: ArrayBuffer): string | undefined {
     return 'video/webm'
   }
 
+  if (
+    bytes.length >= 5 &&
+    bytes[0] === 0x25 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x44 &&
+    bytes[3] === 0x46 &&
+    bytes[4] === 0x2d
+  ) {
+    return 'application/pdf'
+  }
+
   if (isHtml(bytes)) {
     return 'text/html'
   }
@@ -161,7 +254,8 @@ function sniffContentType(buffer: ArrayBuffer): string | undefined {
 export function hasStoredContentType(
   contentType: string | undefined
 ): contentType is string {
-  return !!contentType && contentType !== 'application/octet-stream'
+  const normalized = normalizeContentType(contentType)
+  return !!normalized && normalized !== 'application/octet-stream'
 }
 
 export function resolveContentType(
@@ -169,14 +263,28 @@ export function resolveContentType(
   buffer: ArrayBuffer,
   filename?: string
 ): string {
-  if (declared && declared !== 'application/octet-stream') {
-    return declared
+  const normalizedDeclared = normalizeContentType(declared)
+  const filenameContentType = filename
+    ? contentTypeFromFilename(filename)
+    : undefined
+
+  if (
+    (normalizedDeclared === 'text/plain' ||
+      normalizedDeclared === 'application/vnd.ms-excel') &&
+    (filenameContentType === 'application/json' ||
+      filenameContentType === 'text/csv')
+  ) {
+    return filenameContentType
+  }
+
+  if (normalizedDeclared && normalizedDeclared !== 'application/octet-stream') {
+    return normalizedDeclared
   }
 
   return (
     sniffContentType(buffer) ??
-    (filename ? contentTypeFromFilename(filename) : undefined) ??
-    declared ??
+    filenameContentType ??
+    normalizedDeclared ??
     'application/octet-stream'
   )
 }
