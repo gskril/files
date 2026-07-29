@@ -1,6 +1,6 @@
 # File Uploader
 
-An Astro app deployed as a Cloudflare Worker. Provides an API to upload files to Cloudflare R2 and a simple UI to view them.
+An Astro app deployed as a Cloudflare Worker. Provides an API to upload files to Cloudflare R2 and a simple UI to view images, audio, videos, HTML, PDF, JSON, and CSV files.
 
 ## Stack
 
@@ -36,22 +36,22 @@ The dev server runs at `http://localhost:4321` with simulated local bindings, in
 
 ## Routes
 
-| Route | Method | Description |
-|---|---|---|
-| `/` | GET | Landing page (prerendered) |
-| `/share/[fileId]` | GET | View an uploaded file |
-| `/cdn/[fileId]` | GET | Serve raw file content from R2 |
-| `/api/create` | POST | Upload a file (requires `x-admin-secret` header) |
-| `/api/list` | GET | List uploaded files (requires `x-admin-secret` header) |
+| Route             | Method | Description                                                            |
+| ----------------- | ------ | ---------------------------------------------------------------------- |
+| `/`               | GET    | Landing page (prerendered)                                             |
+| `/share/[fileId]` | GET    | View an uploaded file                                                  |
+| `/cdn/[fileId]`   | GET    | Serve raw file content from R2 (including byte ranges for PDF viewing) |
+| `/api/create`     | POST   | Upload a file (requires `x-admin-secret` header)                       |
+| `/api/list`       | GET    | List uploaded files (requires `x-admin-secret` header)                 |
 
 File keys are the SHA-256 hex hash of the file contents. Legacy IPFS CIDv0 keys (`Qm...`) are still accepted for files uploaded before the migration.
 
 ## Scripts
 
-| Command | Description |
-|---|---|
-| `pnpm dev` | Start local dev server |
-| `pnpm build` | Build for production |
-| `pnpm preview` | Build and preview locally with Wrangler |
-| `pnpm check` | Run Astro type checking |
-| `pnpm cf-typegen` | Regenerate Cloudflare binding types |
+| Command           | Description                             |
+| ----------------- | --------------------------------------- |
+| `pnpm dev`        | Start local dev server                  |
+| `pnpm build`      | Build for production                    |
+| `pnpm preview`    | Build and preview locally with Wrangler |
+| `pnpm check`      | Run Astro type checking                 |
+| `pnpm cf-typegen` | Regenerate Cloudflare binding types     |
