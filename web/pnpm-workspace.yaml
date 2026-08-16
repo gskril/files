@@ -10,3 +10,18 @@ minimumReleaseAge: 2880
 
 # Fail resolution instead of falling back to a too-new version.
 minimumReleaseAgeStrict: true
+
+# Force patched versions of transitive dependencies with known
+# security advisories that astro/wrangler haven't bumped yet upstream.
+overrides:
+  smol-toml: ">=1.6.1"
+  picomatch: ">=2.3.2"
+  yaml: ">=2.8.3"
+  brace-expansion: ">=2.1.4"
+  fast-uri: ">=3.1.5"
+  nanoid: ">=3.3.18"
+  postcss: ">=8.5.23"
+  svgo: ">=4.0.2"
+  "@babel/core": ">=7.29.1"
+  undici: ">=7.29.0"
+  sharp: ">=0.35.0"
