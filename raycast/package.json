@@ -45,12 +45,12 @@
     "formdata-node": "^6.0.3"
   },
   "devDependencies": {
-    "@raycast/eslint-config": "^1.0.8",
+    "@raycast/eslint-config": "^2.2.0",
     "@types/fluent-ffmpeg": "^2.1.26",
     "@types/mime-types": "^2.1.4",
     "@types/node": "20.8.10",
     "@types/react": "18.3.3",
-    "eslint": "^8.57.0",
+    "eslint": "^9.39.5",
     "prettier": "^3.3.3",
     "typescript": "^5.4.5"
   },
