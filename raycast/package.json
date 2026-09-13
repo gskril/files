@@ -55,7 +55,8 @@
     "typescript": "^5.9.3"
   },
   "overrides": {
-    "esbuild": "0.28.2"
+    "esbuild": "0.28.2",
+    "js-yaml": ">=4.3.2"
   },
   "scripts": {
     "build": "ray build -e dist -o dist",
