@@ -3,7 +3,9 @@ compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
 # Cache /cdn responses at the edge per their Cache-Control headers (immutable
-# content-addressed files). API and dynamic routes omit cacheable headers.
+# content-addressed files). Responses without Cache-Control are still cached
+# heuristically, so API routes set `Cache-Control: private, no-store` in
+# middleware to keep cached responses from bypassing the auth check.
 [cache]
 enabled = true
 
