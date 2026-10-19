@@ -74,7 +74,7 @@ async function upload(path: string) {
   }
 
   if (!res.ok || !data.key) {
-    fail(`Upload failed for ${path}: ${data.error ?? res.statusText}`)
+    failRequest(`Upload failed for ${path}`, res, data.error)
   }
 
   console.log(`${baseUrl}/share/${data.key}`)
@@ -82,7 +82,7 @@ async function upload(path: string) {
 
 async function list() {
   const res = await fetch(`${baseUrl}/api/list`, { headers })
-  if (!res.ok) fail(`List failed: ${res.status} ${res.statusText}`)
+  if (!res.ok) failRequest('List failed', res)
 
   const { objects } = (await res.json()) as ListResponse
   objects.sort((a, b) => b.uploaded.localeCompare(a.uploaded))
@@ -111,6 +111,11 @@ function formatSize(bytes: number) {
     i++
   }
   return `${bytes.toFixed(i === 0 ? 0 : 1)} ${units[i]}`
+}
+
+function failRequest(prefix: string, res: Response, error?: string): never {
+  const hint = res.status === 401 ? ' (check FILES_SECRET)' : ''
+  fail(`${prefix}: ${res.status} ${error ?? res.statusText}${hint}`)
 }
 
 function fail(message: string): never {
